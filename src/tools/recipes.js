@@ -2,6 +2,7 @@ import { z } from "zod";
 import { textResponse, errorResponse } from "./helpers.js";
 import { createElicitationHelpers } from "./elicitation.js";
 import { normalizeRecipe } from "../recipe-normalizer.js";
+import { loadStyleGuide, STYLE_GUIDE_HINT } from "../style-guide.js";
 
 export function register(server, getClient) {
   const { elicitRequiredField, elicitConfirmation } = createElicitationHelpers(server);
@@ -15,7 +16,7 @@ export function register(server, getClient) {
 - update: Partially update an existing recipe by name (only the fields you pass change; the rest are preserved)
 - delete: Delete a recipe by name
 - import_url: Import a recipe from a website URL (parses ingredients, steps, etc.)
-- normalize: Preview/parse a recipe from a URL or raw text without saving (set save=true to also save)`,
+- normalize: Preview/parse a recipe from a URL or raw text without saving (set save=true to also save)${loadStyleGuide() ? STYLE_GUIDE_HINT : ""}`,
     inputSchema: {
       action: z.enum(["list", "get", "create", "update", "delete", "import_url", "normalize"]).describe("The recipe action to perform"),
       name: z.string().optional().describe("Recipe name (required for get, create, update, delete)"),

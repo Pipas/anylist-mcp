@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { textResponse, errorResponse } from "./helpers.js";
 import { createElicitationHelpers } from "./elicitation.js";
+import { loadStyleGuide, STYLE_GUIDE_HINT } from "../style-guide.js";
 
 // Default categories recognized by anylist.
 const valid_categories = ["baby","bakery","beverages","breakfast-and-cereal","condiments-oils-and-salad-dressings",
@@ -21,7 +22,7 @@ function buildDescription(stores) {
 - delete_item: Permanently remove an item from a list
 - get_favorites: Get favorite items for a list
 - get_recents: Get recently added items for a list
-- list_stores: list stores available for the list (if any)`;
+- list_stores: list stores available for the list (if any)${loadStyleGuide() ? STYLE_GUIDE_HINT : ""}`;
   if (!stores || stores.length === 0) return base;
   const storeList = stores.map(s => s.name).join(', ');
   return `${base}\n\nAvailable stores: ${storeList}`;

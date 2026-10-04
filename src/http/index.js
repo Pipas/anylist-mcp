@@ -17,6 +17,7 @@ import { getOrCreateSession } from "./session-manager.js";
 import oauthRouter, { requireBearerToken } from "./auth/oauth.js";
 import onboardingRouter from "./onboarding.js";
 import { registerAllTools } from "../tools/index.js";
+import { loadStyleGuide, styleGuideInstructions } from "../style-guide.js";
 import { isGoogleEnabled } from "./auth/providers/google.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -143,7 +144,11 @@ app.use(onboardingRouter);
 const mcpSessions = new Map(); // sessionId → { server, transport }
 
 function createMcpServer(userId) {
-  const mcpServer = new McpServer({ name: "anylist-mcp-server", version: "1.8.0" });
+  const styleGuide = loadStyleGuide();
+  const mcpServer = new McpServer(
+    { name: "anylist-mcp-server", version: "1.8.0" },
+    styleGuide ? { instructions: styleGuideInstructions(styleGuide) } : undefined,
+  );
   registerAllTools(mcpServer, () => getOrCreateSession(userId));
   return mcpServer;
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { loadStyleGuide, STYLE_GUIDE_HINT } from "../style-guide.js";
 import { textResponse, errorResponse } from "./helpers.js";
 import { createElicitationHelpers } from "./elicitation.js";
 
@@ -11,7 +12,7 @@ export function register(server, getClient) {
 - list_events: Show all meal plan events (sorted by date)
 - list_labels: Show available labels (Breakfast, Lunch, Dinner, etc.) with IDs
 - create_event: Add a meal plan event for a date
-- delete_event: Delete a meal plan event by ID`,
+- delete_event: Delete a meal plan event by ID${loadStyleGuide() ? STYLE_GUIDE_HINT : ""}`,
     inputSchema: {
       action: z.enum(["list_events", "list_labels", "create_event", "delete_event"]).describe("The meal plan action to perform"),
       date: z.string().optional().describe("Date in YYYY-MM-DD format (required for create_event)"),

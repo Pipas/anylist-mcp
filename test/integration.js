@@ -7,7 +7,7 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: ['src/server.js'],
-  env: { ...process.env },
+  env: { ...process.env, STYLE_GUIDE_FILE: fileURLToPath(new URL('../style-guide.example.md', import.meta.url)) },
   cwd: fileURLToPath(new URL('..', import.meta.url)),
 });
 
@@ -41,6 +41,14 @@ try {
     if (!names.includes('recipes')) throw new Error('Missing recipes tool');
     if (!names.includes('meal_plan')) throw new Error('Missing meal_plan tool');
     return `${names.length} tools found`;
+  });
+
+  // Style guide: sent as server instructions and readable via the style_guide tool
+  await test('style guide → instructions + style_guide tool', async () => {
+    if (!client.getInstructions()?.includes('# AnyList style guide')) throw new Error('style guide missing from server instructions');
+    const r = await client.callTool({ name: 'style_guide', arguments: {} });
+    if (r.isError || !r.content[0].text.startsWith('# AnyList style guide')) throw new Error(r.content[0].text);
+    return 'guide in instructions and returned by style_guide';
   });
 
   // Health check

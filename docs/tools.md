@@ -196,6 +196,18 @@ Organize recipes into named collections.
 
 ---
 
+## `style_guide`
+
+Only available when the server has a style guide: a Markdown file named by the `STYLE_GUIDE_FILE` environment variable (in Docker, copy `style-guide.example.md` to `config/style-guide.md`). The guide is also sent to clients as the server's MCP instructions, and the `recipes`, `shopping` and `meal_plan` descriptions ask the model to follow it. The file is re-read for every new session, so edits apply without a restart.
+
+Takes no parameters and returns the guide's text.
+
+```json
+{ "name": "style_guide", "arguments": {} }
+```
+
+---
+
 ## Typical multi-step interaction
 
 1. **Browse recipes** — `recipes` → `list`

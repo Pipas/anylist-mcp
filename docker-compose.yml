@@ -12,6 +12,8 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       ANYLIST_SESSION_IDLE_MINUTES: ${ANYLIST_SESSION_IDLE_MINUTES:-30}
       ALLOWED_EMAILS_FILE: /config/allowed-emails.txt
+      # Optional: copy style-guide.example.md to config/style-guide.md to enable
+      STYLE_GUIDE_FILE: ${STYLE_GUIDE_FILE:-/config/style-guide.md}
       NODE_ENV: production
     volumes:
       - anylist_data:/data
