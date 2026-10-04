@@ -130,6 +130,10 @@ export class MockAnyListClient {
     return { ...r, ingredients: r.ingredients || [], preparationSteps: r.preparationSteps || [] };
   }
 
+  async getAllRecipeDetails() {
+    return this._recipes.map(r => ({ ...r, ingredients: r.ingredients || [], preparationSteps: r.preparationSteps || [] }));
+  }
+
   async createRecipe(opts) {
     this._recipes.push(opts);
     return { identifier: 'r-1', name: opts.name };

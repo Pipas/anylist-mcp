@@ -11,7 +11,18 @@ export function loadStyleGuide() {
     throw error;
   }
   if (!text.trim()) return null;
-  return { text };
+  return { text, rules: parseRules(text) };
+}
+
+export function parseRules(text) {
+  const match = text.match(/```json\s*\n([\s\S]*?)\n```/);
+  if (!match) return {};
+  try {
+    return JSON.parse(match[1]);
+  } catch (error) {
+    console.error(`Style guide: ignoring invalid JSON rules block (${error.message})`);
+    return {};
+  }
 }
 
 export function styleGuideInstructions(guide) {

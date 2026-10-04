@@ -3,6 +3,7 @@ import { textResponse, errorResponse } from "./helpers.js";
 import { createElicitationHelpers } from "./elicitation.js";
 import { normalizeRecipe } from "../recipe-normalizer.js";
 import { loadStyleGuide, STYLE_GUIDE_HINT } from "../style-guide.js";
+import { auditRecipe } from "../style-audit.js";
 
 export function register(server, getClient) {
   const { elicitRequiredField, elicitConfirmation } = createElicitationHelpers(server);
@@ -16,10 +17,11 @@ export function register(server, getClient) {
 - update: Partially update an existing recipe by name (only the fields you pass change; the rest are preserved)
 - delete: Delete a recipe by name
 - import_url: Import a recipe from a website URL (parses ingredients, steps, etc.)
-- normalize: Preview/parse a recipe from a URL or raw text without saving (set save=true to also save)${loadStyleGuide() ? STYLE_GUIDE_HINT : ""}`,
+- normalize: Preview/parse a recipe from a URL or raw text without saving (set save=true to also save)
+- audit: Check recipes against the style guide (all, or one with 'name') and list what to fix${loadStyleGuide() ? STYLE_GUIDE_HINT : ""}`,
     inputSchema: {
-      action: z.enum(["list", "get", "create", "update", "delete", "import_url", "normalize"]).describe("The recipe action to perform"),
-      name: z.string().optional().describe("Recipe name (required for get, create, update, delete)"),
+      action: z.enum(["list", "get", "create", "update", "delete", "import_url", "normalize", "audit"]).describe("The recipe action to perform"),
+      name: z.string().optional().describe("Recipe name (required for get, create, update, delete; optional for audit)"),
       search: z.string().optional().describe("Search query to filter recipes (list only)"),
       ingredients: z.array(z.object({
         name: z.string().describe("Ingredient name, e.g. 'flour'"),
@@ -187,6 +189,25 @@ export function register(server, getClient) {
             output += `\n✅ Saved to AnyList as "${created.name}"`;
           }
           return textResponse(output);
+        }
+        case "audit": {
+          const guide = loadStyleGuide();
+          if (!guide) return errorResponse("No style guide is configured on this server (STYLE_GUIDE_FILE).");
+          let recipes = await client.getAllRecipeDetails();
+          if (name) {
+            recipes = recipes.filter(r => r.name && r.name.toLowerCase() === name.toLowerCase());
+            if (recipes.length === 0) return errorResponse(`Recipe "${name}" not found`);
+          }
+          const flagged = recipes
+            .map(r => ({ name: r.name, issues: auditRecipe(r, guide.rules) }))
+            .filter(r => r.issues.length > 0);
+          if (flagged.length === 0) return textResponse(`All ${recipes.length} recipe(s) pass the style guide checks.`);
+          let report = `${flagged.length} of ${recipes.length} recipe(s) need attention:\n`;
+          for (const r of flagged) {
+            report += `\n## ${JSON.stringify(r.name)}\n${r.issues.map(i => `- ${i}`).join("\n")}\n`;
+          }
+          report += "\nThese checks are mechanical; also apply the rest of the style guide.";
+          return textResponse(report);
         }
       }
     } catch (error) {

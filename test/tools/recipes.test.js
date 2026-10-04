@@ -1,7 +1,10 @@
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { register } from '../../src/tools/recipes.js';
 import { MockAnyListClient, createMockServer } from './helpers.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 
 describe('recipes tool', () => {
   let client;
@@ -173,6 +176,59 @@ describe('recipes tool', () => {
     it('returns error for non-existent recipe', async () => {
       const result = await handlers.recipes({ action: 'delete', name: 'Nope' });
       assert.equal(result.isError, true);
+    });
+  });
+
+  describe('audit', () => {
+    let dir;
+    const saved = process.env.STYLE_GUIDE_FILE;
+
+    beforeEach(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'style-'));
+      process.env.STYLE_GUIDE_FILE = path.join(dir, 'guide.md');
+      fs.writeFileSync(process.env.STYLE_GUIDE_FILE, '# Guide\n\n```json\n{"titleLowercaseWords": ["with"]}\n```\n');
+    });
+
+    afterEach(() => {
+      if (saved === undefined) delete process.env.STYLE_GUIDE_FILE;
+      else process.env.STYLE_GUIDE_FILE = saved;
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+
+    it('lists recipes that break the rules and leaves out clean ones', async () => {
+      client._recipes.push(
+        { identifier: 'r-1', name: 'Pasta With Garlic', ingredients: [{ rawIngredient: 'Flour 143g' }] },
+        { identifier: 'r-2', name: 'Pasta with Garlic', ingredients: [{ rawIngredient: '143g Flour' }] },
+      );
+      const text = (await handlers.recipes({ action: 'audit' })).content[0].text;
+      assert.ok(text.includes('1 of 2 recipe(s) need attention'));
+      assert.ok(text.includes('"With" should be lowercase'));
+      assert.ok(text.includes('quantity should come first'));
+      assert.ok(!text.includes('"Pasta with Garlic"'));
+    });
+
+    it('audits one recipe by name', async () => {
+      client._recipes.push({ identifier: 'r-2', name: 'Pasta with Garlic' });
+      const result = await handlers.recipes({ action: 'audit', name: 'pasta with garlic' });
+      assert.ok(result.content[0].text.includes('All 1 recipe(s) pass'));
+    });
+
+    it('reports when there are no recipes', async () => {
+      const result = await handlers.recipes({ action: 'audit' });
+      assert.ok(result.content[0].text.includes('All 0 recipe(s) pass'));
+    });
+
+    it('errors for an unknown recipe name', async () => {
+      const result = await handlers.recipes({ action: 'audit', name: 'Nope' });
+      assert.equal(result.isError, true);
+      assert.ok(result.content[0].text.includes('not found'));
+    });
+
+    it('errors when no style guide is configured', async () => {
+      delete process.env.STYLE_GUIDE_FILE;
+      const result = await handlers.recipes({ action: 'audit' });
+      assert.equal(result.isError, true);
+      assert.ok(result.content[0].text.includes('No style guide'));
     });
   });
 });

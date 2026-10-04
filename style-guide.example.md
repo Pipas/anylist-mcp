@@ -20,3 +20,17 @@ edit recipes, meal plans or shopping items.
 
 - Use the same names as recipe ingredients; put the quantity in the quantity field.
 - Check the list for an existing item before adding a near-duplicate.
+
+## Audit rules
+
+Used by `recipes` → `audit`. Keep this block valid JSON.
+
+```json
+{
+  "titleLowercaseWords": ["a", "an", "the", "and", "or", "with", "of", "in", "on"],
+  "spellings": {
+    "cherry tomatos": "cherry tomatoes",
+    "parmesan cheese": "parmesan"
+  }
+}
+```

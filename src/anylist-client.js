@@ -413,31 +413,47 @@ class AnyListClient {
       if (!recipe) {
         throw new Error(`Recipe "${recipeName}" not found`);
       }
-      return {
-        identifier: recipe.identifier,
-        name: recipe.name,
-        note: recipe.note || null,
-        sourceName: recipe.sourceName || null,
-        sourceUrl: recipe.sourceUrl || null,
-        rating: recipe.rating || null,
-        prepTime: recipe.prepTime || null,
-        cookTime: recipe.cookTime || null,
-        servings: recipe.servings || null,
-        nutritionalInfo: recipe.nutritionalInfo || null,
-        createdAt: recipe.creationTimestamp
-          ? new Date(recipe.creationTimestamp * 1000).toISOString()
-          : (recipe.timestamp ? new Date(recipe.timestamp * 1000).toISOString() : null),
-        ingredients: recipe.ingredients ? recipe.ingredients.map(i => ({
-          rawIngredient: i.rawIngredient || null,
-          name: i.name || null,
-          quantity: i.quantity || null,
-          note: i.note || null,
-        })) : [],
-        preparationSteps: recipe.preparationSteps || [],
-      };
+      return this._recipeDetails(recipe);
     } catch (error) {
       throw new Error(`Failed to get recipe details: ${error.message}`);
     }
+  }
+
+  async getAllRecipeDetails() {
+    if (!this.client) {
+      throw new Error('Not connected. Call connect() first.');
+    }
+    try {
+      const recipes = await this.client.getRecipes();
+      return recipes.map(r => this._recipeDetails(r));
+    } catch (error) {
+      throw new Error(`Failed to get recipe details: ${error.message}`);
+    }
+  }
+
+  _recipeDetails(recipe) {
+    return {
+      identifier: recipe.identifier,
+      name: recipe.name,
+      note: recipe.note || null,
+      sourceName: recipe.sourceName || null,
+      sourceUrl: recipe.sourceUrl || null,
+      rating: recipe.rating || null,
+      prepTime: recipe.prepTime || null,
+      cookTime: recipe.cookTime || null,
+      servings: recipe.servings || null,
+      nutritionalInfo: recipe.nutritionalInfo || null,
+      createdAt: recipe.creationTimestamp
+        ? new Date(recipe.creationTimestamp * 1000).toISOString()
+        : (recipe.timestamp ? new Date(recipe.timestamp * 1000).toISOString() : null),
+      ingredients: recipe.ingredients ? recipe.ingredients.map(i => ({
+        rawIngredient: i.rawIngredient || null,
+        name: i.name || null,
+        quantity: i.quantity || null,
+        note: i.note || null,
+      })) : [],
+      preparationSteps: recipe.preparationSteps || [],
+    };
   }
 
   async importRecipeFromUrl(url) {

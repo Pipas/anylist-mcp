@@ -76,7 +76,7 @@ Manage AnyList recipes, including URL import and text parsing.
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `action` | enum | Yes | See actions below |
-| `name` | string | For most actions | Recipe name |
+| `name` | string | For most actions | Recipe name (optional for audit) |
 | `search` | string | No | Filter recipes by name (list only) |
 | `ingredients` | array | No | `[{ name, quantity }]` (create, update — replaces list on update) |
 | `steps` | string[] | No | Preparation steps (create, update — replaces list on update) |
@@ -129,7 +129,12 @@ Manage AnyList recipes, including URL import and text parsing.
 // Parse and preview a recipe without saving (set save=true to also save)
 { "name": "recipes", "arguments": { "action": "normalize", "url": "https://..." } }
 { "name": "recipes", "arguments": { "action": "normalize", "text": "Pasta\n\n1 lb spaghetti\n\n1. Boil pasta", "save": true } }
+
+// Check all recipes (or one, with name) against the style guide — needs STYLE_GUIDE_FILE
+{ "name": "recipes", "arguments": { "action": "audit" } }
 ```
+
+`audit` only reports; it changes nothing. It always checks for stray spaces, empty or hand-numbered steps, quantities after the ingredient name, and duplicate ingredients. A ```` ```json ```` block in the style guide can add title capitalisation (`titleLowercaseWords`) and preferred spellings (`spellings`, wrong → right). See `style-guide.example.md`.
 
 ---
 

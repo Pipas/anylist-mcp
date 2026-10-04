@@ -481,6 +481,16 @@ try {
   // covered by the mocked unit tests — the `create` action refuses to make a
   // second recipe with an existing name, so the state can't be set up here.
 
+  // Recipes: audit against the style guide (example guide is set for this run)
+  await test(`recipes → audit ("${testRecipe}") and an unknown name`, async () => {
+    const r = await client.callTool({ name: 'recipes', arguments: { action: 'audit', name: testRecipe } });
+    const text = r.content[0].text;
+    if (r.isError || !/recipe\(s\)/.test(text)) throw new Error(text);
+    const missing = await client.callTool({ name: 'recipes', arguments: { action: 'audit', name: `🧪 No Such Recipe ${Date.now()}` } });
+    if (!missing.isError) throw new Error('expected an error for an unknown recipe');
+    return text.split('\n')[0];
+  });
+
   await test(`recipes → delete ("${testRecipe}")`, async () => {
     const r = await client.callTool({ name: 'recipes', arguments: { action: 'delete', name: testRecipe } });
     const text = r.content[0].text;
